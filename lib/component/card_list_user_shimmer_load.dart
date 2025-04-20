@@ -21,7 +21,7 @@ class CardShimmer extends StatelessWidget {
                             radius: 20,
                            child: ShimmerLoad(),
                           ),
-                          5.sBoxHeight,
+                          5.sH,
                           ShimmerLoad(width: MediaQuery.of(context).size.width*0.5),
                           ShimmerLoad(width: MediaQuery.of(context).size.width*0.7,),
                           ShimmerLoad(width: MediaQuery.of(context).size.width*0.8,),
