@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:miniflix/model/apis/ui_configuration.dart';
 import 'package:miniflix/utils/enum.dart';
 import 'package:miniflix/viewmodel/movie_viewmodel.dart';
@@ -39,7 +40,12 @@ class _ViewManageState extends State<ViewManage> {
             spacing: 20,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(child: Text('Title')),
+              Center(
+                child: Text(
+                  'MiniFlix',
+                  style: GoogleFonts.bebasNeue(color: Colors.red, fontSize: 48),
+                ),
+              ),
               trending(mediaHeight),
               popular(mediaHeight),
               upComing(mediaHeight),
@@ -59,7 +65,7 @@ class _ViewManageState extends State<ViewManage> {
         spacing: 20,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Trending'),
+          Text('Trending', style: GoogleFonts.abel(fontSize: 24)),
           SizedBox(
             height: trendingrHeight,
             child: Consumer<MovieViewModel>(
@@ -77,15 +83,58 @@ class _ViewManageState extends State<ViewManage> {
                     itemBuilder: (context, index) {
                       var baseImg = UiConfiguration.baseImage;
                       var posterPath = movieList[index].posterPath;
+                      var voteAverage = movieList[index].voteAverage! * 10;
                       return Padding(
                         padding: const EdgeInsets.only(right: 20),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: CachedNetworkImage(
-                            width: trendingrWidth,
-                            imageUrl: '$baseImg$posterPath',
-                            fit: BoxFit.cover,
-                          ),
+                        child: Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: CachedNetworkImage(
+                                width: trendingrWidth,
+                                imageUrl: '$baseImg$posterPath',
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 8,
+                              left: 8,
+                              child: Container(
+                                width: 30,
+                                height: 30,
+                                decoration: BoxDecoration(
+                                  color: calColor(voteAverage),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Stack(
+                                  children: [
+                                    Center(
+                                      child: Container(
+                                        width: 27,
+                                        height: 27,
+                                        decoration: BoxDecoration(
+                                          color: Colors.black,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            voteAverage
+                                                .toStringAsFixed(0)
+                                                .toString(),
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 10,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       );
                     },
@@ -110,7 +159,7 @@ class _ViewManageState extends State<ViewManage> {
         spacing: 20,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Popular'),
+          Text('Popular', style: GoogleFonts.abel(fontSize: 24)),
           SizedBox(
             height: popularHeight,
             child: Consumer<MovieViewModel>(
@@ -161,7 +210,7 @@ class _ViewManageState extends State<ViewManage> {
         spacing: 20,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Upcoming'),
+          Text('Upcoming', style: GoogleFonts.abel(fontSize: 24)),
           Consumer<MovieViewModel>(
             builder: (context, upcomingViewModel, child) {
               if (upcomingViewModel.statusGetUpcoming ==
@@ -175,23 +224,20 @@ class _ViewManageState extends State<ViewManage> {
                   physics: NeverScrollableScrollPhysics(),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
+                    crossAxisSpacing: 30,
+                    mainAxisSpacing: 30,
                     childAspectRatio: 3 / 4,
                   ),
                   itemCount: movieList!.length,
                   itemBuilder: (context, index) {
                     var baseImg = UiConfiguration.baseImage;
                     var posterPath = movieList[index].posterPath;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 20),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: CachedNetworkImage(
-                          width: upComingWidth,
-                          imageUrl: '$baseImg$posterPath',
-                          fit: BoxFit.cover,
-                        ),
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: CachedNetworkImage(
+                        width: upComingWidth,
+                        imageUrl: '$baseImg$posterPath',
+                        fit: BoxFit.cover,
                       ),
                     );
                   },
@@ -204,5 +250,17 @@ class _ViewManageState extends State<ViewManage> {
         ],
       ),
     );
+  }
+
+  calColor(double voteAverage) {
+    if (voteAverage <= 25) {
+      return Colors.red;
+    } else if (voteAverage <= 50) {
+      return Colors.orange;
+    } else if (voteAverage <= 75) {
+      return Colors.yellow;
+    } else {
+      return Colors.greenAccent;
+    }
   }
 }

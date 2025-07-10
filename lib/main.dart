@@ -30,6 +30,15 @@ class _MyAppState extends State<MyApp> {
         debugShowCheckedModeBanner: false,
         initialRoute: '/',
         routes: appRoutes,
+        theme: ThemeData(
+          brightness: Brightness.light,
+          scaffoldBackgroundColor: const Color.fromARGB(255, 240, 240, 240),
+        ),
+        darkTheme: ThemeData(
+          brightness: Brightness.dark,
+          scaffoldBackgroundColor: const Color.fromARGB(255, 26, 26, 26),
+        ),
+        themeMode: ThemeMode.system,
       ),
     );
   }
