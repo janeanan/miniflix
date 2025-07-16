@@ -33,7 +33,7 @@ class _ViewDetailState extends State<ViewDetail> {
   @override
   Widget build(BuildContext context) {
     double mediaHeight = MediaQuery.of(context).size.height;
-    double mediaWidth = MediaQuery.of(context).size.width;
+    // double mediaWidth = MediaQuery.of(context).size.width;
     return Scaffold(
       body: SingleChildScrollView(
         child: Consumer<MovieViewModel>(
@@ -54,14 +54,13 @@ class _ViewDetailState extends State<ViewDetail> {
                     children: [
                       AspectRatio(
                         aspectRatio: 4 / 2.5,
-                        child: Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                              image: NetworkImage('$baseImg$backdropPath'),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
+                        child: CachedNetworkImage(
+                          imageUrl: '$baseImg$backdropPath',
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) =>
+                              const Center(child: CircularProgressIndicator()),
+                          errorWidget: (context, url, error) =>
+                              const Icon(Icons.error, color: Colors.red),
                         ),
                       ),
                       AspectRatio(
@@ -116,13 +115,20 @@ class _ViewDetailState extends State<ViewDetail> {
                           ),
                         ),
                         Text(
+                          'Storyline',
+                          style: GoogleFonts.outfit(
+                            color: Colors.white,
+                            fontSize: 32,
+                          ),
+                        ),
+                        Text(
                           movieOverview.toString(),
                           style: GoogleFonts.outfit(
                             color: Colors.white,
                             fontSize: 17,
                           ),
                         ),
-                        theCast(mediaHeight),
+                        castAndCrew(mediaHeight),
                       ],
                     ),
                   ),
@@ -137,31 +143,68 @@ class _ViewDetailState extends State<ViewDetail> {
     );
   }
 
-  theCast(double mediaHeight) {
-    var theCastHeight = mediaHeight * 0.1;
-    var theCastWidth = theCastHeight * 3 / 4.5;
-    return SizedBox(
-      height: theCastHeight,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: 3,
-        itemBuilder: (context, index) {
-          return Padding(
-            padding: const EdgeInsets.only(right: 20),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: AspectRatio(
-                aspectRatio: 1 / 1.3,
-                child: CachedNetworkImage(
-                  imageUrl:
-                      'https://i.pinimg.com/1200x/3a/29/b4/3a29b4b45427220dbda245a0c143864c.jpg',
-                  fit: BoxFit.cover,
+  castAndCrew(double mediaHeight) {
+    var theCastHeight = mediaHeight * 0.2;
+    // var theCastWidth = theCastHeight * 3 / 4;
+    final double imageWidth = theCastHeight * 0.6;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Cast & Crew',
+          style: GoogleFonts.outfit(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: theCastHeight,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: 4,
+            itemBuilder: (context, index) {
+              return Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: SizedBox(
+                        width: imageWidth,
+                        child: AspectRatio(
+                          aspectRatio: 1 / 1.3, // อัตราส่วนภาพ
+                          child: CachedNetworkImage(
+                            imageUrl:
+                                'https://i.pinimg.com/1200x/3a/29/b4/3a29b4b45427220dbda245a0c143864c.jpg',
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                            errorWidget: (context, url, error) =>
+                                const Icon(Icons.error, color: Colors.red),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Actor Name',
+                      style: TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                    const Text(
+                      'Character',
+                      style: TextStyle(color: Colors.grey, fontSize: 11),
+                    ),
+                  ],
                 ),
-              ),
-            ),
-          );
-        },
-      ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
