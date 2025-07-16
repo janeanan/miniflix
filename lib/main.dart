@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import 'package:miniflix/view/viewmanage.dart';
+import 'package:miniflix/router/approuter.dart';
 import 'package:miniflix/viewmodel/movie_viewmodel.dart';
 import 'package:provider/provider.dart';
 
@@ -16,27 +15,23 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  final appRouter = Approuter();
   @override
   Widget build(BuildContext context) {
-    final Map<String, WidgetBuilder> appRoutes = {
-      '/': (context) => ViewManage(),
-    };
-
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (createx) => MovieViewModel()),
       ],
-      child: MaterialApp(
+      child: MaterialApp.router(
+        routerConfig: appRouter.router,
         debugShowCheckedModeBanner: false,
-        initialRoute: '/',
-        routes: appRoutes,
         theme: ThemeData(
           brightness: Brightness.light,
           scaffoldBackgroundColor: const Color.fromARGB(255, 240, 240, 240),
         ),
         darkTheme: ThemeData(
           brightness: Brightness.dark,
-          scaffoldBackgroundColor: const Color.fromARGB(255, 26, 26, 26),
+          scaffoldBackgroundColor: const Color.fromARGB(255, 20, 20, 20),
         ),
         themeMode: ThemeMode.system,
       ),

@@ -15,7 +15,7 @@ class DioConfiguration {
         error: true,
         compact: true,
         logPrint: (obj) {
-          // debugPrint('\x1B[32m$obj\x1B[0m'); // Green color for logs
+          debugPrint('\x1B[32m$obj\x1B[0m'); // Green color for logs
         },
       ),
     );

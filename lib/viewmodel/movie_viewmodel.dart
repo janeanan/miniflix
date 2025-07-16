@@ -1,7 +1,12 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:miniflix/model/apis/api_key.dart';
 import 'package:miniflix/model/apis/dio_configuration.dart';
 import 'package:miniflix/model/movie.dart';
+import 'package:miniflix/model/movie_detail.dart';
 import 'package:miniflix/model/service/res_client.dart';
+import 'package:miniflix/model/trending.dart';
 import 'package:miniflix/utils/enum.dart';
 import 'package:miniflix/utils/utils.dart';
 
@@ -9,8 +14,8 @@ class MovieViewModel extends ChangeNotifier {
   //! getTrendingList
   ConnectionStatus _statusGetTrending = ConnectionStatus.none;
   ConnectionStatus get statusGetTrending => _statusGetTrending;
-  Movie _responseGetTrending = Movie();
-  Movie get responseGetTrending => _responseGetTrending;
+  Trending _responseGetTrending = Trending();
+  Trending get responseGetTrending => _responseGetTrending;
 
   Future<void> getTrendingList() async {
     Utils.checkInternetConnection().then((value) {
@@ -18,7 +23,7 @@ class MovieViewModel extends ChangeNotifier {
         _statusGetTrending = ConnectionStatus.loading;
         notifyListeners();
         RestClient(DioConfiguration.getDioInstance())
-            .getTrendingMovies(apiKey: '93b5941ee4b87ed816693cfa75375609')
+            .getTrendingMovies(apiKey: ApiKeyConfiguration.apiKey)
             .then((value) {
               _responseGetTrending = value;
               _statusGetTrending = ConnectionStatus.success;
@@ -48,7 +53,7 @@ class MovieViewModel extends ChangeNotifier {
         _statusGetPopular = ConnectionStatus.loading;
         notifyListeners();
         RestClient(DioConfiguration.getDioInstance())
-            .getPopularMovies(apiKey: '93b5941ee4b87ed816693cfa75375609')
+            .getPopularMovies(apiKey: ApiKeyConfiguration.apiKey)
             .then((value) {
               _responseGetPopular = value;
               _statusGetPopular = ConnectionStatus.success;
@@ -78,7 +83,7 @@ class MovieViewModel extends ChangeNotifier {
         _statusGetUpcoming = ConnectionStatus.loading;
         notifyListeners();
         RestClient(DioConfiguration.getDioInstance())
-            .getUpComingMovies(apiKey: '93b5941ee4b87ed816693cfa75375609')
+            .getUpComingMovies(apiKey: ApiKeyConfiguration.apiKey)
             .then((value) {
               _responseGetUpcoming = value;
               _statusGetUpcoming = ConnectionStatus.success;
@@ -96,4 +101,36 @@ class MovieViewModel extends ChangeNotifier {
   }
 
   //! End getUpcomingList
+
+  //! getDetailMovie
+  ConnectionStatus _statusGetMovieDetail = ConnectionStatus.none;
+  ConnectionStatus get statusGetMovieDetail => _statusGetMovieDetail;
+  MovieDetail _responseGetMovieDetail = MovieDetail();
+  MovieDetail get responseGetMovieDetail => _responseGetMovieDetail;
+
+  Future<void> getMovieDetail(String movieId) async {
+    Utils.checkInternetConnection().then((value) {
+      if (value) {
+        _statusGetMovieDetail = ConnectionStatus.loading;
+        notifyListeners();
+        RestClient(DioConfiguration.getDioInstance())
+            .getMovieDetail(
+              movieId: movieId,
+              apiKey: ApiKeyConfiguration.apiKey,
+            )
+            .then((value) {
+              _responseGetMovieDetail = value;
+              _statusGetMovieDetail = ConnectionStatus.success;
+              notifyListeners();
+            })
+            .onError((error, stackTrace) {
+              _statusGetMovieDetail = ConnectionStatus.failed;
+              notifyListeners();
+            });
+      } else {
+        _statusGetMovieDetail = ConnectionStatus.noInternet;
+        notifyListeners();
+      }
+    });
+  }
 }

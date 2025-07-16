@@ -1,8 +1,12 @@
+import 'dart:developer';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:miniflix/model/apis/ui_configuration.dart';
 import 'package:miniflix/utils/enum.dart';
+import 'package:miniflix/view/component/shimmer.dart';
 import 'package:miniflix/viewmodel/movie_viewmodel.dart';
 import 'package:provider/provider.dart';
 
@@ -58,7 +62,7 @@ class _ViewManageState extends State<ViewManage> {
 
   trending(double mediaHeight) {
     var trendingrHeight = mediaHeight * 0.4;
-    var trendingrWidth = trendingrHeight * 3 / 4;
+    var trendingrWidth = trendingrHeight * 3 / 4.5;
     return Padding(
       padding: const EdgeInsets.only(left: 20),
       child: Column(
@@ -72,7 +76,19 @@ class _ViewManageState extends State<ViewManage> {
               builder: (context, trendingViewModel, child) {
                 if (trendingViewModel.statusGetTrending ==
                     ConnectionStatus.loading) {
-                  return Text('load');
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    scrollDirection: Axis.horizontal,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 20),
+                        child: LoadShimmer(
+                          width: trendingrWidth,
+                          height: trendingrHeight,
+                        ),
+                      );
+                    },
+                  );
                 } else if (trendingViewModel.statusGetTrending ==
                     ConnectionStatus.success) {
                   var movieList = trendingViewModel.responseGetTrending.results;
@@ -82,55 +98,49 @@ class _ViewManageState extends State<ViewManage> {
                     itemCount: movieList!.length,
                     itemBuilder: (context, index) {
                       var baseImg = UiConfiguration.baseImage;
+                      var movieId = movieList[index].id;
                       var posterPath = movieList[index].posterPath;
                       var voteAverage = movieList[index].voteAverage! * 10;
                       return Padding(
                         padding: const EdgeInsets.only(right: 20),
                         child: Stack(
                           children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(16),
-                              child: CachedNetworkImage(
-                                width: trendingrWidth,
-                                imageUrl: '$baseImg$posterPath',
-                                fit: BoxFit.cover,
+                            GestureDetector(
+                              onTap: () {
+                                context.go(
+                                  '/viewDetails',
+                                  extra: movieId.toString(),
+                                );
+                              },
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: AspectRatio(
+                                  aspectRatio: 3 / 4.5,
+                                  child: CachedNetworkImage(
+                                    imageUrl: '$baseImg$posterPath',
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
                               ),
                             ),
                             Positioned(
-                              bottom: 8,
-                              left: 8,
-                              child: Container(
-                                width: 30,
-                                height: 30,
-                                decoration: BoxDecoration(
-                                  color: calColor(voteAverage),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Stack(
-                                  children: [
-                                    Center(
-                                      child: Container(
-                                        width: 27,
-                                        height: 27,
-                                        decoration: BoxDecoration(
-                                          color: Colors.black,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            voteAverage
-                                                .toStringAsFixed(0)
-                                                .toString(),
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 10,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
+                              bottom: 0,
+                              child: CircleAvatar(
+                                maxRadius: trendingrWidth * 0.06,
+                                backgroundColor: calColor(voteAverage),
+                                child: CircleAvatar(
+                                  maxRadius: trendingrWidth * 0.05,
+                                  backgroundColor: Colors.black.withValues(
+                                    alpha: 0.7,
+                                  ),
+                                  child: Text(
+                                    voteAverage.toStringAsFixed(0).toString(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 10,
                                     ),
-                                  ],
+                                  ),
                                 ),
                               ),
                             ),
@@ -152,7 +162,7 @@ class _ViewManageState extends State<ViewManage> {
 
   popular(double mediaHeight) {
     var popularHeight = mediaHeight * 0.2;
-    var popularWidth = popularHeight * 3 / 4;
+    var popularWidth = popularHeight * 3 / 4.5;
     return Padding(
       padding: const EdgeInsets.only(left: 20),
       child: Column(
@@ -166,7 +176,20 @@ class _ViewManageState extends State<ViewManage> {
               builder: (context, popularViewModel, child) {
                 if (popularViewModel.statusGetPopular ==
                     ConnectionStatus.loading) {
-                  return Text('load');
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    scrollDirection: Axis.horizontal,
+                    itemCount: 3,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 20),
+                        child: LoadShimmer(
+                          width: popularWidth,
+                          height: popularHeight,
+                        ),
+                      );
+                    },
+                  );
                 } else if (popularViewModel.statusGetPopular ==
                     ConnectionStatus.success) {
                   var movieList = popularViewModel.responseGetPopular.results;
@@ -181,10 +204,12 @@ class _ViewManageState extends State<ViewManage> {
                         padding: const EdgeInsets.only(right: 20),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(16),
-                          child: CachedNetworkImage(
-                            width: popularWidth,
-                            imageUrl: '$baseImg$posterPath',
-                            fit: BoxFit.cover,
+                          child: AspectRatio(
+                            aspectRatio: 3 / 4.5,
+                            child: CachedNetworkImage(
+                              imageUrl: '$baseImg$posterPath',
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
                       );
@@ -203,7 +228,7 @@ class _ViewManageState extends State<ViewManage> {
 
   upComing(double mediaHeight) {
     var upComingHeight = mediaHeight * 0.2;
-    var upComingWidth = upComingHeight * 3 / 4;
+    var upComingWidth = upComingHeight * 3 / 4.5;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -215,7 +240,26 @@ class _ViewManageState extends State<ViewManage> {
             builder: (context, upcomingViewModel, child) {
               if (upcomingViewModel.statusGetUpcoming ==
                   ConnectionStatus.loading) {
-                return Text('load');
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 30,
+                    mainAxisSpacing: 30,
+                    childAspectRatio: 3 / 4.5,
+                  ),
+                  itemCount: 2,
+                  itemBuilder: (context, index) {
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: LoadShimmer(
+                        width: upComingWidth,
+                        height: upComingHeight,
+                      ),
+                    );
+                  },
+                );
               } else if (upcomingViewModel.statusGetUpcoming ==
                   ConnectionStatus.success) {
                 var movieList = upcomingViewModel.responseGetUpcoming.results;
@@ -224,18 +268,17 @@ class _ViewManageState extends State<ViewManage> {
                   physics: NeverScrollableScrollPhysics(),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    crossAxisSpacing: 30,
-                    mainAxisSpacing: 30,
-                    childAspectRatio: 3 / 4,
+                    crossAxisSpacing: 25,
+                    mainAxisSpacing: 25,
+                    childAspectRatio: 3 / 4.5,
                   ),
                   itemCount: movieList!.length,
                   itemBuilder: (context, index) {
                     var baseImg = UiConfiguration.baseImage;
                     var posterPath = movieList[index].posterPath;
                     return ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(5),
                       child: CachedNetworkImage(
-                        width: upComingWidth,
                         imageUrl: '$baseImg$posterPath',
                         fit: BoxFit.cover,
                       ),
