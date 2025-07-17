@@ -1,5 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:miniflix/model/apis/ui_configuration.dart';
 import 'package:miniflix/utils/enum.dart';
@@ -16,37 +18,43 @@ class ViewDetail extends StatefulWidget {
 }
 
 class _ViewDetailState extends State<ViewDetail> {
-  String baseImg = UiConfiguration.baseImage;
   late MovieViewModel movieDetailModel;
+  final String baseImg = UiConfiguration.baseImage;
 
-  setData() {
+  @override
+  void initState() {
+    super.initState();
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     movieDetailModel = Provider.of<MovieViewModel>(context, listen: false);
     movieDetailModel.getMovieDetail(widget.movieId);
   }
 
   @override
-  void initState() {
-    super.initState();
-    setData();
+  void dispose() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    double mediaHeight = MediaQuery.of(context).size.height;
-    // double mediaWidth = MediaQuery.of(context).size.width;
     return Scaffold(
       body: SingleChildScrollView(
         child: Consumer<MovieViewModel>(
-          builder: (context, movieDetailviewModel, child) {
-            if (movieDetailviewModel.statusGetMovieDetail ==
-                ConnectionStatus.loading) {
-              return Text('load');
-            } else if (movieDetailviewModel.statusGetMovieDetail ==
-                ConnectionStatus.success) {
-              var movieDetailData = movieDetailviewModel.responseGetMovieDetail;
-              var backdropPath = movieDetailData.backdropPath;
-              var movieTitle = movieDetailData.title;
-              var movieOverview = movieDetailData.overview;
+          builder: (context, vm, child) {
+            final status = vm.statusGetMovieDetail;
+            if (status == ConnectionStatus.loading) {
+              return SizedBox(
+                height: MediaQuery.of(context).size.height,
+                child: const Center(child: CircularProgressIndicator()),
+              );
+            }
+            if (status == ConnectionStatus.success) {
+              final movie = vm.responseGetMovieDetail;
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -55,7 +63,7 @@ class _ViewDetailState extends State<ViewDetail> {
                       AspectRatio(
                         aspectRatio: 4 / 2.5,
                         child: CachedNetworkImage(
-                          imageUrl: '$baseImg$backdropPath',
+                          imageUrl: '$baseImg${movie.backdropPath}',
                           fit: BoxFit.cover,
                           placeholder: (context, url) =>
                               const Center(child: CircularProgressIndicator()),
@@ -66,17 +74,15 @@ class _ViewDetailState extends State<ViewDetail> {
                       AspectRatio(
                         aspectRatio: 4 / 2.5,
                         child: Container(
-                          width: double.infinity,
                           decoration: BoxDecoration(
-                            color: Colors.white,
                             gradient: LinearGradient(
-                              begin: FractionalOffset.topCenter,
-                              end: FractionalOffset.bottomCenter,
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
                               colors: [
                                 Colors.black.withValues(alpha: 0.1),
-                                Color.fromARGB(255, 20, 20, 20),
+                                const Color.fromARGB(255, 20, 20, 20),
                               ],
-                              stops: [0.3, 1.0],
+                              stops: const [0.3, 1.0],
                             ),
                           ),
                         ),
@@ -89,10 +95,8 @@ class _ViewDetailState extends State<ViewDetail> {
                               alpha: 0.3,
                             ),
                             child: IconButton(
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                              icon: Icon(
+                              onPressed: () => Navigator.of(context).pop(),
+                              icon: const Icon(
                                 Icons.arrow_back_ios_new_rounded,
                                 color: Colors.white,
                               ),
@@ -105,48 +109,75 @@ class _ViewDetailState extends State<ViewDetail> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Column(
+                      spacing: 20,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          movieTitle.toString(),
+                          movie.title ?? '',
                           style: GoogleFonts.outfit(
                             color: Colors.white,
                             fontSize: 32,
+                          ),
+                        ),
+                        Container(
+                          width: MediaQuery.of(context).size.height * 0.15,
+                          height: MediaQuery.of(context).size.height * 0.05,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            color: Colors.red.shade900,
+                          ),
+                          child: TextButton.icon(
+                            onPressed: () => context.push('/videoView'),
+
+                            label: Text(
+                              'Trailer',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            icon: Icon(
+                              Icons.play_arrow,
+                              size: 25,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                         Text(
                           'Storyline',
                           style: GoogleFonts.outfit(
                             color: Colors.white,
-                            fontSize: 32,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                         Text(
-                          movieOverview.toString(),
+                          movie.overview ?? '',
                           style: GoogleFonts.outfit(
                             color: Colors.white,
                             fontSize: 17,
                           ),
                         ),
-                        castAndCrew(mediaHeight),
+                        castAndCrew(),
                       ],
                     ),
                   ),
                 ],
               );
-            } else {
-              return Text('Error');
             }
+            return const Center(
+              child: Text(
+                'Error loading movie details',
+                style: TextStyle(color: Colors.red),
+              ),
+            );
           },
         ),
       ),
     );
   }
 
-  castAndCrew(double mediaHeight) {
-    var theCastHeight = mediaHeight * 0.2;
-    // var theCastWidth = theCastHeight * 3 / 4;
-    final double imageWidth = theCastHeight * 0.6;
+  castAndCrew() {
+    const double castHeight = 150;
+    final double imageWidth = castHeight * 0.6;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -160,48 +191,56 @@ class _ViewDetailState extends State<ViewDetail> {
         ),
         const SizedBox(height: 10),
         SizedBox(
-          height: theCastHeight,
+          height: castHeight,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: 4,
-            itemBuilder: (context, index) {
-              return Padding(
-                padding: const EdgeInsets.only(right: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: SizedBox(
-                        width: imageWidth,
-                        child: AspectRatio(
-                          aspectRatio: 1 / 1.3, // อัตราส่วนภาพ
-                          child: CachedNetworkImage(
-                            imageUrl:
-                                'https://i.pinimg.com/1200x/3a/29/b4/3a29b4b45427220dbda245a0c143864c.jpg',
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => const Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                            errorWidget: (context, url, error) =>
-                                const Icon(Icons.error, color: Colors.red),
-                          ),
+            itemBuilder: (context, index) => Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: SizedBox(
+                      width: imageWidth,
+                      height: castHeight * 0.75,
+                      child: AspectRatio(
+                        aspectRatio: 1 / 1.3,
+                        child: CachedNetworkImage(
+                          imageUrl:
+                              'https://i.pinimg.com/1200x/3a/29/b4/3a29b4b45427220dbda245a0c143864c.jpg',
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) =>
+                              const Center(child: CircularProgressIndicator()),
+                          errorWidget: (context, url, error) =>
+                              const Icon(Icons.error, color: Colors.red),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    const Text(
+                  ),
+                  const SizedBox(height: 4),
+                  SizedBox(
+                    width: imageWidth,
+                    child: const Text(
                       'Actor Name',
                       style: TextStyle(color: Colors.white, fontSize: 12),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const Text(
+                  ),
+                  SizedBox(
+                    width: imageWidth,
+                    child: const Text(
                       'Character',
                       style: TextStyle(color: Colors.grey, fontSize: 11),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ],
-                ),
-              );
-            },
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ],

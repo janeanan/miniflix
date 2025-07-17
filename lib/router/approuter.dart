@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:miniflix/view/detailview/videoview.dart';
 import 'package:miniflix/view/detailview/viewdetail.dart';
 import 'package:miniflix/view/viewmanage.dart';
 
@@ -21,6 +22,7 @@ class Approuter {
               return ViewDetail(movieId: movieId);
             },
           ),
+          GoRoute(path: 'videoView', builder: (context, state) => VideoView()),
         ],
       ),
     ],

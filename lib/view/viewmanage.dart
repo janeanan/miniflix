@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:miniflix/model/apis/ui_configuration.dart';
 import 'package:miniflix/utils/enum.dart';
-import 'package:miniflix/view/component/shimmer.dart';
 import 'package:miniflix/viewmodel/movie_viewmodel.dart';
 import 'package:provider/provider.dart';
 
@@ -18,7 +17,9 @@ class ViewManage extends StatefulWidget {
 class _ViewManageState extends State<ViewManage> {
   late MovieViewModel movieViewModel;
 
-  setDatas() {
+  @override
+  void initState() {
+    super.initState();
     movieViewModel = Provider.of<MovieViewModel>(context, listen: false);
     movieViewModel.getTrendingList();
     movieViewModel.getPopularList();
@@ -26,20 +27,14 @@ class _ViewManageState extends State<ViewManage> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    setDatas();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    double mediaHeight = MediaQuery.of(context).size.height;
-    // double mediaWidth = MediaQuery.of(context).size.width;
+    final orientation = MediaQuery.of(context).orientation;
+    final mediaHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
-            spacing: 20,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Center(
@@ -48,9 +43,14 @@ class _ViewManageState extends State<ViewManage> {
                   style: GoogleFonts.bebasNeue(color: Colors.red, fontSize: 48),
                 ),
               ),
-              trending(mediaHeight),
-              popular(mediaHeight),
-              upComing(mediaHeight),
+              Column(
+                spacing: 30,
+                children: [
+                  trending(mediaHeight),
+                  popular(),
+                  upComing(orientation),
+                ],
+              ),
             ],
           ),
         ),
@@ -59,80 +59,74 @@ class _ViewManageState extends State<ViewManage> {
   }
 
   trending(double mediaHeight) {
-    var trendingrHeight = mediaHeight * 0.4;
-    var trendingrWidth = trendingrHeight * 3 / 4.5;
+    const trendingHeight = 350.0;
     return Padding(
       padding: const EdgeInsets.only(left: 20),
       child: Column(
-        spacing: 20,
+        spacing: 10,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Trending', style: GoogleFonts.abel(fontSize: 24)),
           SizedBox(
-            height: trendingrHeight,
+            height: trendingHeight,
             child: Consumer<MovieViewModel>(
-              builder: (context, trendingViewModel, child) {
-                if (trendingViewModel.statusGetTrending ==
-                    ConnectionStatus.loading) {
+              builder: (context, vm, child) {
+                final status = vm.statusGetTrending;
+                if (status == ConnectionStatus.loading) {
+                  return Center(child: CircularProgressIndicator());
+                }
+                if (status == ConnectionStatus.success) {
+                  final movieList = vm.responseGetTrending.results!;
+                  final baseImg = UiConfiguration.baseImage;
+
                   return ListView.builder(
-                    shrinkWrap: true,
                     scrollDirection: Axis.horizontal,
+                    itemCount: movieList.length,
                     itemBuilder: (context, index) {
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 20),
-                        child: LoadShimmer(
-                          width: trendingrWidth,
-                          height: trendingrHeight,
-                        ),
-                      );
-                    },
-                  );
-                } else if (trendingViewModel.statusGetTrending ==
-                    ConnectionStatus.success) {
-                  var movieList = trendingViewModel.responseGetTrending.results;
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    scrollDirection: Axis.horizontal,
-                    itemCount: movieList!.length,
-                    itemBuilder: (context, index) {
-                      var baseImg = UiConfiguration.baseImage;
-                      var movieId = movieList[index].id;
-                      var posterPath = movieList[index].posterPath;
-                      var voteAverage = movieList[index].voteAverage! * 10;
+                      final movie = movieList[index];
+                      final voteAverage = movie.voteAverage! * 10;
+
                       return Padding(
                         padding: const EdgeInsets.only(right: 20),
                         child: Stack(
                           children: [
                             GestureDetector(
-                              onTap: () {
-                                context.go(
-                                  '/viewDetails',
-                                  extra: movieId.toString(),
-                                );
-                              },
+                              onTap: () => context.push(
+                                '/viewDetails',
+                                extra: movie.id.toString(),
+                              ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(16),
                                 child: AspectRatio(
                                   aspectRatio: 3 / 4.5,
                                   child: CachedNetworkImage(
-                                    imageUrl: '$baseImg$posterPath',
+                                    imageUrl: '$baseImg${movie.posterPath}',
                                     fit: BoxFit.cover,
+                                    placeholder: (context, url) => const Center(
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                    errorWidget: (context, url, error) =>
+                                        const Icon(
+                                          Icons.error,
+                                          color: Colors.red,
+                                        ),
                                   ),
                                 ),
                               ),
                             ),
                             Positioned(
-                              bottom: 0,
+                              bottom: 2,
+                              left: 2,
                               child: CircleAvatar(
-                                maxRadius: trendingrWidth * 0.06,
+                                radius: 15,
                                 backgroundColor: calColor(voteAverage),
                                 child: CircleAvatar(
-                                  maxRadius: trendingrWidth * 0.05,
+                                  radius: 12,
                                   backgroundColor: Colors.black.withValues(
-                                    alpha: 0.7,
+                                    alpha: 0.6,
                                   ),
                                   child: Text(
-                                    voteAverage.toStringAsFixed(0).toString(),
+                                    voteAverage.toStringAsFixed(0),
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
@@ -147,9 +141,8 @@ class _ViewManageState extends State<ViewManage> {
                       );
                     },
                   );
-                } else {
-                  return Text('error');
                 }
+                return const Text('Error loading trending movies');
               },
             ),
           ),
@@ -158,46 +151,34 @@ class _ViewManageState extends State<ViewManage> {
     );
   }
 
-  popular(double mediaHeight) {
-    var popularHeight = mediaHeight * 0.2;
-    var popularWidth = popularHeight * 3 / 4.5;
+  popular() {
+    const popularHeight = 180.0;
+
     return Padding(
       padding: const EdgeInsets.only(left: 20),
       child: Column(
-        spacing: 20,
+        spacing: 10,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Popular', style: GoogleFonts.abel(fontSize: 24)),
           SizedBox(
             height: popularHeight,
             child: Consumer<MovieViewModel>(
-              builder: (context, popularViewModel, child) {
-                if (popularViewModel.statusGetPopular ==
-                    ConnectionStatus.loading) {
+              builder: (context, vm, child) {
+                final status = vm.statusGetPopular;
+                if (status == ConnectionStatus.loading) {
+                  return Center(child: CircularProgressIndicator());
+                }
+                if (status == ConnectionStatus.success) {
+                  final movieList = vm.responseGetPopular.results!;
+                  final baseImg = UiConfiguration.baseImage;
+
                   return ListView.builder(
-                    shrinkWrap: true,
                     scrollDirection: Axis.horizontal,
-                    itemCount: 3,
+                    itemCount: movieList.length,
                     itemBuilder: (context, index) {
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 20),
-                        child: LoadShimmer(
-                          width: popularWidth,
-                          height: popularHeight,
-                        ),
-                      );
-                    },
-                  );
-                } else if (popularViewModel.statusGetPopular ==
-                    ConnectionStatus.success) {
-                  var movieList = popularViewModel.responseGetPopular.results;
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    scrollDirection: Axis.horizontal,
-                    itemCount: movieList!.length,
-                    itemBuilder: (context, index) {
-                      var baseImg = UiConfiguration.baseImage;
-                      var posterPath = movieList[index].posterPath;
+                      final posterPath = movieList[index].posterPath;
+
                       return Padding(
                         padding: const EdgeInsets.only(right: 20),
                         child: ClipRRect(
@@ -207,15 +188,19 @@ class _ViewManageState extends State<ViewManage> {
                             child: CachedNetworkImage(
                               imageUrl: '$baseImg$posterPath',
                               fit: BoxFit.cover,
+                              placeholder: (context, url) => const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                              errorWidget: (context, url, error) =>
+                                  const Icon(Icons.error, color: Colors.red),
                             ),
                           ),
                         ),
                       );
                     },
                   );
-                } else {
-                  return Text('error');
                 }
+                return const Text('Error loading popular movies');
               },
             ),
           ),
@@ -224,68 +209,53 @@ class _ViewManageState extends State<ViewManage> {
     );
   }
 
-  upComing(double mediaHeight) {
-    var upComingHeight = mediaHeight * 0.2;
-    var upComingWidth = upComingHeight * 3 / 4.5;
+  upComing(Orientation orientation) {
+    final crossCount = orientation == Orientation.portrait ? 2 : 3;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
-        spacing: 20,
+        spacing: 10,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Upcoming', style: GoogleFonts.abel(fontSize: 24)),
           Consumer<MovieViewModel>(
-            builder: (context, upcomingViewModel, child) {
-              if (upcomingViewModel.statusGetUpcoming ==
-                  ConnectionStatus.loading) {
-                return GridView.builder(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 30,
-                    mainAxisSpacing: 30,
-                    childAspectRatio: 3 / 4.5,
-                  ),
-                  itemCount: 2,
-                  itemBuilder: (context, index) {
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: LoadShimmer(
-                        width: upComingWidth,
-                        height: upComingHeight,
-                      ),
-                    );
-                  },
-                );
-              } else if (upcomingViewModel.statusGetUpcoming ==
-                  ConnectionStatus.success) {
-                var movieList = upcomingViewModel.responseGetUpcoming.results;
-                return GridView.builder(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 25,
-                    mainAxisSpacing: 25,
-                    childAspectRatio: 3 / 4.5,
-                  ),
-                  itemCount: movieList!.length,
-                  itemBuilder: (context, index) {
-                    var baseImg = UiConfiguration.baseImage;
-                    var posterPath = movieList[index].posterPath;
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(5),
-                      child: CachedNetworkImage(
-                        imageUrl: '$baseImg$posterPath',
-                        fit: BoxFit.cover,
-                      ),
-                    );
-                  },
-                );
-              } else {
-                return Text('error');
+            builder: (context, vm, child) {
+              final status = vm.statusGetUpcoming;
+
+              if (status == ConnectionStatus.loading) {
+                return Center(child: CircularProgressIndicator());
               }
+
+              if (status == ConnectionStatus.success) {
+                final movieList = vm.responseGetUpcoming.results!;
+                final baseImg = UiConfiguration.baseImage;
+
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossCount,
+                    crossAxisSpacing: 20,
+                    mainAxisSpacing: 20,
+                    childAspectRatio: 3 / 4.5,
+                  ),
+                  itemCount: movieList.length,
+                  itemBuilder: (context, index) => ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: CachedNetworkImage(
+                      imageUrl: '$baseImg${movieList[index].posterPath}',
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) =>
+                          const Center(child: CircularProgressIndicator()),
+                      errorWidget: (context, url, error) =>
+                          const Icon(Icons.error, color: Colors.red),
+                    ),
+                  ),
+                );
+              }
+
+              return const Text('Error loading upcoming movies');
             },
           ),
         ],
@@ -294,14 +264,9 @@ class _ViewManageState extends State<ViewManage> {
   }
 
   calColor(double voteAverage) {
-    if (voteAverage <= 25) {
-      return Colors.red;
-    } else if (voteAverage <= 50) {
-      return Colors.orange;
-    } else if (voteAverage <= 75) {
-      return Colors.yellow;
-    } else {
-      return Colors.greenAccent;
-    }
+    if (voteAverage <= 25) return Colors.red;
+    if (voteAverage <= 50) return Colors.orange;
+    if (voteAverage <= 75) return Colors.yellow;
+    return Colors.greenAccent;
   }
 }
