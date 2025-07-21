@@ -5,6 +5,7 @@ import 'package:miniflix/model/movie.dart';
 import 'package:miniflix/model/movie_detail.dart';
 import 'package:miniflix/model/service/res_client.dart';
 import 'package:miniflix/model/trending.dart';
+import 'package:miniflix/model/video.dart';
 import 'package:miniflix/utils/enum.dart';
 import 'package:miniflix/utils/utils.dart';
 
@@ -127,6 +128,36 @@ class MovieViewModel extends ChangeNotifier {
             });
       } else {
         _statusGetMovieDetail = ConnectionStatus.noInternet;
+        notifyListeners();
+      }
+    });
+  }
+  //! End getDetailMovie
+
+  //! getVideos
+  ConnectionStatus _statusGetVideos = ConnectionStatus.none;
+  ConnectionStatus get statusGetVideos => _statusGetVideos;
+  Videos _responseGetVideos = Videos();
+  Videos get responseGetvideos => _responseGetVideos;
+
+  Future<void> getVideos(String movieId) async {
+    Utils.checkInternetConnection().then((value) {
+      if (value) {
+        _statusGetVideos = ConnectionStatus.loading;
+        notifyListeners();
+        RestClient(DioConfiguration.getDioInstance())
+            .getVideos(movieId: movieId, apiKey: ApiKeyConfiguration.apiKey)
+            .then((value) {
+              _responseGetVideos = value;
+              _statusGetVideos = ConnectionStatus.success;
+              notifyListeners();
+            })
+            .onError((error, stackTrace) {
+              _statusGetVideos = ConnectionStatus.failed;
+              notifyListeners();
+            });
+      } else {
+        _statusGetVideos = ConnectionStatus.noInternet;
         notifyListeners();
       }
     });

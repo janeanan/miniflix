@@ -3,17 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 class VideoView extends StatefulWidget {
-  const VideoView({super.key});
+  final String trailerKey;
+  const VideoView({super.key, required this.trailerKey});
 
   @override
   State<VideoView> createState() => _VideoViewState();
 }
 
 class _VideoViewState extends State<VideoView> {
-  final YoutubePlayerController _controller = YoutubePlayerController(
-    initialVideoId: 'iLnmTe5Q2Qw',
-    flags: YoutubePlayerFlags(autoPlay: true, mute: true),
-  );
+  late YoutubePlayerController _controller;
 
   @override
   void initState() {
@@ -22,10 +20,16 @@ class _VideoViewState extends State<VideoView> {
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
+    _controller = YoutubePlayerController(
+      initialVideoId: widget.trailerKey,
+      flags: YoutubePlayerFlags(autoPlay: true, mute: false),
+    );
   }
 
   @override
   void dispose() {
+    _controller.pause();
+    _controller.dispose();
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,

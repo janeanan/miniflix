@@ -22,7 +22,13 @@ class Approuter {
               return ViewDetail(movieId: movieId);
             },
           ),
-          GoRoute(path: 'videoView', builder: (context, state) => VideoView()),
+          GoRoute(
+            path: 'videoView',
+            builder: (context, state) {
+              final trailerKey = state.extra as String;
+              return VideoView(trailerKey: trailerKey);
+            },
+          ),
         ],
       ),
     ],

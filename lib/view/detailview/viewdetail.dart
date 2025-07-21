@@ -20,6 +20,7 @@ class ViewDetail extends StatefulWidget {
 class _ViewDetailState extends State<ViewDetail> {
   late MovieViewModel movieDetailModel;
   final String baseImg = UiConfiguration.baseImage;
+  String trailerKey = '';
 
   @override
   void initState() {
@@ -27,6 +28,7 @@ class _ViewDetailState extends State<ViewDetail> {
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     movieDetailModel = Provider.of<MovieViewModel>(context, listen: false);
     movieDetailModel.getMovieDetail(widget.movieId);
+    movieDetailModel.getVideos(widget.movieId);
   }
 
   @override
@@ -127,8 +129,18 @@ class _ViewDetailState extends State<ViewDetail> {
                             color: Colors.red.shade900,
                           ),
                           child: TextButton.icon(
-                            onPressed: () => context.push('/videoView'),
-
+                            onPressed: () {
+                              for (var item
+                                  in movieDetailModel
+                                      .responseGetvideos
+                                      .results!) {
+                                if (item.type == 'Trailer') {
+                                  trailerKey = item.key.toString();
+                                  break;
+                                }
+                              }
+                              context.push('/videoView', extra: trailerKey);
+                            },
                             label: Text(
                               'Trailer',
                               style: TextStyle(color: Colors.white),

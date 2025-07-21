@@ -13,4 +13,7 @@ class Apis {
   //! ## baseServiceUrl + movie + movieList
   static const String popular = '/popular';
   static const String upComing = '/upcoming';
+  //* VIDEOS
+  //! ## baseServiceUrl + movie + {movie_id} + videos
+  static const String videos = '/videos';
 }
