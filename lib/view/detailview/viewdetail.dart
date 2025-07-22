@@ -21,6 +21,7 @@ class _ViewDetailState extends State<ViewDetail> {
   late MovieViewModel movieDetailModel;
   final String baseImg = UiConfiguration.baseImage;
   String trailerKey = '';
+  final ValueNotifier<bool> _isExpanded = ValueNotifier<bool>(false);
 
   @override
   void initState() {
@@ -28,7 +29,9 @@ class _ViewDetailState extends State<ViewDetail> {
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     movieDetailModel = Provider.of<MovieViewModel>(context, listen: false);
     movieDetailModel.getMovieDetail(widget.movieId);
+    movieDetailModel.getCredits(widget.movieId);
     movieDetailModel.getVideos(widget.movieId);
+    movieDetailModel.getReviews(widget.movieId);
   }
 
   @override
@@ -39,6 +42,7 @@ class _ViewDetailState extends State<ViewDetail> {
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
+    _isExpanded.dispose();
     super.dispose();
   }
 
@@ -54,8 +58,7 @@ class _ViewDetailState extends State<ViewDetail> {
                 height: MediaQuery.of(context).size.height,
                 child: const Center(child: CircularProgressIndicator()),
               );
-            }
-            if (status == ConnectionStatus.success) {
+            } else if (status == ConnectionStatus.success) {
               final movie = vm.responseGetMovieDetail;
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,6 +171,7 @@ class _ViewDetailState extends State<ViewDetail> {
                           ),
                         ),
                         castAndCrew(),
+                        reviews(),
                       ],
                     ),
                   ),
@@ -191,6 +195,7 @@ class _ViewDetailState extends State<ViewDetail> {
     final double imageWidth = castHeight * 0.6;
 
     return Column(
+      spacing: 20,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
@@ -201,59 +206,222 @@ class _ViewDetailState extends State<ViewDetail> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 10),
         SizedBox(
           height: castHeight,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: 4,
-            itemBuilder: (context, index) => Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: SizedBox(
-                      width: imageWidth,
-                      height: castHeight * 0.75,
-                      child: AspectRatio(
-                        aspectRatio: 1 / 1.3,
-                        child: CachedNetworkImage(
-                          imageUrl:
-                              'https://i.pinimg.com/1200x/3a/29/b4/3a29b4b45427220dbda245a0c143864c.jpg',
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) =>
-                              const Center(child: CircularProgressIndicator()),
-                          errorWidget: (context, url, error) =>
-                              const Icon(Icons.error, color: Colors.red),
+          child: Consumer<MovieViewModel>(
+            builder: (context, vm, child) {
+              var cast = vm.responseGetCredits.cast;
+              return ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: cast!.length,
+                itemBuilder: (context, index) {
+                  var castIndex = cast[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: SizedBox(
+                            width: imageWidth,
+                            height: castHeight * 0.75,
+                            child: AspectRatio(
+                              aspectRatio: 1 / 1.3,
+                              child: CachedNetworkImage(
+                                imageUrl: '$baseImg${castIndex.profilePath}',
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => const Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                                errorWidget: (context, url, error) => Container(
+                                  color: Colors.grey[300],
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    'No Image',
+                                    style: TextStyle(
+                                      color: Colors.black54,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
+                        const SizedBox(height: 4),
+                        SizedBox(
+                          width: imageWidth,
+                          child: Text(
+                            '${castIndex.name}',
+                            style: TextStyle(color: Colors.white, fontSize: 12),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        SizedBox(
+                          width: imageWidth,
+                          child: Text(
+                            '${castIndex.character}',
+                            style: TextStyle(color: Colors.grey, fontSize: 11),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  reviews() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Reviews',
+          style: GoogleFonts.outfit(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Consumer<MovieViewModel>(
+          builder: (context, vm, child) {
+            final status = vm.statusGetReviws;
+            if (status == ConnectionStatus.loading) {
+              return SizedBox(
+                height: MediaQuery.of(context).size.height,
+                child: const Center(child: CircularProgressIndicator()),
+              );
+            } else if (status == ConnectionStatus.success) {
+              var review = vm.responseGetReviews.results;
+              return ListView.builder(
+                physics: NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
+                reverse: true,
+                itemCount: review!.length,
+                itemBuilder: (context, index) {
+                  var reviewIndex = review[index];
+                  return Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(100),
+                            child: CircleAvatar(
+                              backgroundColor: Colors.grey[300],
+                              radius: 18,
+                              child: ClipOval(
+                                child: CachedNetworkImage(
+                                  imageUrl:
+                                      '$baseImg${reviewIndex.authorDetails?.avatarPath}',
+                                  fit: BoxFit.cover,
+                                  width: 48,
+                                  height: 48,
+                                  placeholder: (context, url) =>
+                                      const CircularProgressIndicator(),
+                                  errorWidget: (context, url, error) =>
+                                      const Icon(
+                                        Icons.person,
+                                        color: Colors.grey,
+                                      ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        '${reviewIndex.author}',
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      DateFormatter.formatDateTime(
+                                        reviewIndex.createdAt.toString(),
+                                      ),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                ValueListenableBuilder<bool>(
+                                  valueListenable: _isExpanded,
+                                  builder: (context, isExpanded, child) {
+                                    return Column(
+                                      spacing: 10,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          reviewIndex.content!,
+                                          style: const TextStyle(fontSize: 14),
+                                          maxLines: isExpanded ? null : 5,
+                                          overflow: isExpanded
+                                              ? TextOverflow.visible
+                                              : TextOverflow.ellipsis,
+                                        ),
+                                        GestureDetector(
+                                          onTap: () {
+                                            _isExpanded.value =
+                                                !_isExpanded.value;
+                                          },
+                                          child: Text(
+                                            isExpanded
+                                                ? 'Show less'
+                                                : 'Read more',
+                                            style: TextStyle(
+                                              color: Colors.blueAccent,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  SizedBox(
-                    width: imageWidth,
-                    child: const Text(
-                      'Actor Name',
-                      style: TextStyle(color: Colors.white, fontSize: 12),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  SizedBox(
-                    width: imageWidth,
-                    child: const Text(
-                      'Character',
-                      style: TextStyle(color: Colors.grey, fontSize: 11),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+                  );
+                },
+              );
+            } else {
+              return const Center(
+                child: Text(
+                  'Error loading movie details',
+                  style: TextStyle(color: Colors.red),
+                ),
+              );
+            }
+          },
         ),
       ],
     );

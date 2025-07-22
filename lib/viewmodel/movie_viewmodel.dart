@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:miniflix/model/apis/api_key.dart';
 import 'package:miniflix/model/apis/dio_configuration.dart';
+import 'package:miniflix/model/credits.dart';
 import 'package:miniflix/model/movie.dart';
 import 'package:miniflix/model/movie_detail.dart';
+import 'package:miniflix/model/review.dart';
 import 'package:miniflix/model/service/res_client.dart';
 import 'package:miniflix/model/trending.dart';
 import 'package:miniflix/model/video.dart';
@@ -158,6 +160,66 @@ class MovieViewModel extends ChangeNotifier {
             });
       } else {
         _statusGetVideos = ConnectionStatus.noInternet;
+        notifyListeners();
+      }
+    });
+  }
+  //! End getVideos
+
+  //! getCredits
+  ConnectionStatus _statusGetCredits = ConnectionStatus.none;
+  ConnectionStatus get statusGetCredits => _statusGetCredits;
+  Credits _responseGetCredits = Credits();
+  Credits get responseGetCredits => _responseGetCredits;
+
+  Future<void> getCredits(String movieId) async {
+    Utils.checkInternetConnection().then((value) {
+      if (value) {
+        _statusGetCredits = ConnectionStatus.loading;
+        notifyListeners();
+        RestClient(DioConfiguration.getDioInstance())
+            .getCredits(movieId: movieId, apiKey: ApiKeyConfiguration.apiKey)
+            .then((value) {
+              _responseGetCredits = value;
+              _statusGetCredits = ConnectionStatus.success;
+              notifyListeners();
+            })
+            .onError((error, stackTrace) {
+              _statusGetCredits = ConnectionStatus.failed;
+              notifyListeners();
+            });
+      } else {
+        _statusGetCredits = ConnectionStatus.noInternet;
+        notifyListeners();
+      }
+    });
+  }
+  //! End getCredits
+
+  //! getReviews
+  ConnectionStatus _statusGetReviws = ConnectionStatus.none;
+  ConnectionStatus get statusGetReviws => _statusGetReviws;
+  Reviews _responseGetReviews = Reviews();
+  Reviews get responseGetReviews => _responseGetReviews;
+
+  Future<void> getReviews(String movieId) async {
+    Utils.checkInternetConnection().then((value) {
+      if (value) {
+        _statusGetReviws = ConnectionStatus.loading;
+        notifyListeners();
+        RestClient(DioConfiguration.getDioInstance())
+            .getReviews(movieId: movieId, apiKey: ApiKeyConfiguration.apiKey)
+            .then((value) {
+              _responseGetReviews = value;
+              _statusGetReviws = ConnectionStatus.success;
+              notifyListeners();
+            })
+            .onError((error, stackTrace) {
+              _statusGetReviws = ConnectionStatus.failed;
+              notifyListeners();
+            });
+      } else {
+        _statusGetReviws = ConnectionStatus.noInternet;
         notifyListeners();
       }
     });

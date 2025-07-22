@@ -46,6 +46,7 @@ dependencies:
   go_router: ^16.0.0
   shimmer: ^3.0.0
   youtube_player_flutter: ^9.1.1
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
