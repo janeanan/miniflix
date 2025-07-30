@@ -21,6 +21,7 @@ class _ViewDetailState extends State<ViewDetail> {
   late MovieViewModel movieDetailModel;
   final String baseImg = UiConfiguration.baseImage;
   String trailerKey = '';
+  List<ValueNotifier<bool>> _expandedList = [];
   final ValueNotifier<bool> _isExpanded = ValueNotifier<bool>(false);
 
   @override
@@ -302,11 +303,15 @@ class _ViewDetailState extends State<ViewDetail> {
               );
             } else if (status == ConnectionStatus.success) {
               var review = vm.responseGetReviews.results;
+              _expandedList = List.generate(
+                review!.length,
+                (_) => ValueNotifier(false),
+              );
               return ListView.builder(
                 physics: NeverScrollableScrollPhysics(),
                 shrinkWrap: true,
                 reverse: true,
-                itemCount: review!.length,
+                itemCount: review.length,
                 itemBuilder: (context, index) {
                   var reviewIndex = review[index];
                   return Card(
@@ -371,35 +376,37 @@ class _ViewDetailState extends State<ViewDetail> {
                                 ),
                                 const SizedBox(height: 10),
                                 ValueListenableBuilder<bool>(
-                                  valueListenable: _isExpanded,
+                                  valueListenable: _expandedList[index],
                                   builder: (context, isExpanded, child) {
                                     return Column(
-                                      spacing: 10,
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           reviewIndex.content!,
                                           style: const TextStyle(fontSize: 14),
-                                          maxLines: isExpanded ? null : 5,
+                                          maxLines: isExpanded ? null : 4,
                                           overflow: isExpanded
                                               ? TextOverflow.visible
                                               : TextOverflow.ellipsis,
                                         ),
-                                        GestureDetector(
-                                          onTap: () {
-                                            _isExpanded.value =
-                                                !_isExpanded.value;
-                                          },
-                                          child: Text(
-                                            isExpanded
-                                                ? 'Show less'
-                                                : 'Read more',
-                                            style: TextStyle(
-                                              color: Colors.blueAccent,
+                                        const SizedBox(height: 4),
+                                        if (reviewIndex.content!.length > 200)
+                                          GestureDetector(
+                                            onTap: () {
+                                              _expandedList[index].value =
+                                                  !_expandedList[index].value;
+                                            },
+                                            child: Text(
+                                              isExpanded
+                                                  ? 'Show less'
+                                                  : 'Read more',
+                                              style: const TextStyle(
+                                                color: Colors.blueAccent,
+                                                fontWeight: FontWeight.w500,
+                                              ),
                                             ),
                                           ),
-                                        ),
                                       ],
                                     );
                                   },

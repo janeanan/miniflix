@@ -177,22 +177,28 @@ class _ViewManageState extends State<ViewManage> {
                     scrollDirection: Axis.horizontal,
                     itemCount: movieList.length,
                     itemBuilder: (context, index) {
+                      final movie = movieList[index];
                       final posterPath = movieList[index].posterPath;
-
                       return Padding(
                         padding: const EdgeInsets.only(right: 20),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: AspectRatio(
-                            aspectRatio: 3 / 4.5,
-                            child: CachedNetworkImage(
-                              imageUrl: '$baseImg$posterPath',
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => const Center(
-                                child: CircularProgressIndicator(),
+                        child: GestureDetector(
+                          onTap: () => context.push(
+                            '/viewDetails',
+                            extra: movie.id.toString(),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: AspectRatio(
+                              aspectRatio: 3 / 4.5,
+                              child: CachedNetworkImage(
+                                imageUrl: '$baseImg$posterPath',
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => const Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                                errorWidget: (context, url, error) =>
+                                    const Icon(Icons.error, color: Colors.red),
                               ),
-                              errorWidget: (context, url, error) =>
-                                  const Icon(Icons.error, color: Colors.red),
                             ),
                           ),
                         ),
@@ -241,17 +247,26 @@ class _ViewManageState extends State<ViewManage> {
                     childAspectRatio: 3 / 4.5,
                   ),
                   itemCount: movieList.length,
-                  itemBuilder: (context, index) => ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: CachedNetworkImage(
-                      imageUrl: '$baseImg${movieList[index].posterPath}',
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) =>
-                          const Center(child: CircularProgressIndicator()),
-                      errorWidget: (context, url, error) =>
-                          const Icon(Icons.error, color: Colors.red),
-                    ),
-                  ),
+                  itemBuilder: (context, index) {
+                    final movie = movieList[index];
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: GestureDetector(
+                        onTap: () => context.push(
+                          '/viewDetails',
+                          extra: movie.id.toString(),
+                        ),
+                        child: CachedNetworkImage(
+                          imageUrl: '$baseImg${movieList[index].posterPath}',
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) =>
+                              const Center(child: CircularProgressIndicator()),
+                          errorWidget: (context, url, error) =>
+                              const Icon(Icons.error, color: Colors.red),
+                        ),
+                      ),
+                    );
+                  },
                 );
               }
 
